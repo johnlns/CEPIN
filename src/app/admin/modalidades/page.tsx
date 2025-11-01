@@ -308,7 +308,7 @@ export default function CadastroModalidadesPage() {
           </CardHeader>
           <CardContent>
             {modalidades.length === 0 ? (
-              <p className="text-gray-600">Nenhuma modalidade cadastrada ainda. Clique em "Nova Modalidade" para começar.</p>
+              <p className="text-gray-600">Nenhuma modalidade cadastrada ainda. Clique em &quot;Nova Modalidade&quot; para começar.</p>
             ) : (
               <div className="space-y-4">
                 {modalidades.map(mod => (

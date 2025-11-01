@@ -398,7 +398,7 @@ export default function RelatoriosPage() {
                 <div>
                   <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">
-                    Selecione o período e clique em "Gerar Relatório" para visualizar os dados
+                    Selecione o período e clique em &quot;Gerar Relatório&quot; para visualizar os dados
                   </p>
                 </div>
               </div>

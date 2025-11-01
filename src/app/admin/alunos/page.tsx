@@ -404,7 +404,7 @@ export default function AdminAlunosPage() {
           </CardHeader>
           <CardContent>
             {alunos.length === 0 ? (
-              <p className="text-gray-600">Nenhum aluno cadastrado ainda. Clique em "Novo Aluno" para começar.</p>
+              <p className="text-gray-600">Nenhum aluno cadastrado ainda. Clique em &quot;Novo Aluno&quot; para começar.</p>
             ) : (
               <div className="space-y-4">
                 {alunos.map(aluno => (

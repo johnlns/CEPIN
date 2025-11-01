@@ -268,7 +268,7 @@ export default function ProfessoresPage() {
           </CardHeader>
           <CardContent>
             {professores.length === 0 ? (
-              <p className="text-gray-600">Nenhum professor cadastrado ainda. Clique em "Novo Professor" para começar.</p>
+              <p className="text-gray-600">Nenhum professor cadastrado ainda. Clique em &quot;Novo Professor&quot; para começar.</p>
             ) : (
               <div className="space-y-4">
                 {professores.map(professor => (

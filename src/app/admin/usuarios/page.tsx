@@ -351,7 +351,7 @@ export default function AdminUsuariosPage() {
           </CardHeader>
           <CardContent>
             {usuarios.length === 0 ? (
-              <p className="text-gray-600">Nenhum usuário cadastrado ainda. Clique em "Novo Usuário" para começar.</p>
+              <p className="text-gray-600">Nenhum usuário cadastrado ainda. Clique em &quot;Novo Usuário&quot; para começar.</p>
             ) : (
               <div className="space-y-4">
                 {usuarios.map(usuario => (

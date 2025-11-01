@@ -109,6 +109,7 @@ export default function ExperimentalPage() {
   // Consultar horários quando modalidade ou data mudarem
   useEffect(() => {
     consultarHorarios()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.modalidadeInteresse, formData.dataPreferencia])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
