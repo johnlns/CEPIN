@@ -7,7 +7,7 @@ const envSchema = z.object({
   // SMTP opcional para modo DEV: vazio cai no log simulado no mailer
   SMTP_HOST: z.string().optional().default(''),
   SMTP_PORT: z.coerce.number().default(587),
-  SMTP_USER: z.string().email().or(z.literal('')).default(''),
+  SMTP_USER: z.string().default(''),
   SMTP_PASS: z.string().optional().default(''),
   APP_URL: z.string().url().default('http://localhost:3000'),
   // Em DEV, fornecemos um segredo padrão longo suficiente
