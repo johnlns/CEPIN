@@ -14,7 +14,7 @@ interface Usuario {
   id: string
   name: string
   email: string
-  role: 'admin' | 'gestor' | 'professor' | 'recepcionista'
+  role: 'admin' | 'gestor' | 'professor' | 'responsavel'
   permissoes: {
     alunos: boolean
     turmas: boolean
@@ -55,7 +55,7 @@ const PERMISSOES_PADRAO = {
     personal: true,
     relatorios: false
   },
-  recepcionista: {
+  responsavel: {
     alunos: true,
     turmas: false,
     vendas: true,
@@ -214,7 +214,7 @@ export default function AdminUsuariosPage() {
       admin: 'bg-red-100 text-red-800',
       gestor: 'bg-blue-100 text-blue-800',
       professor: 'bg-green-100 text-green-800',
-      recepcionista: 'bg-yellow-100 text-yellow-800'
+      responsavel: 'bg-yellow-100 text-yellow-800'
     }
     return <Badge className={colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>{role}</Badge>
   }
@@ -291,7 +291,7 @@ export default function AdminUsuariosPage() {
                       <option value="admin">Administrador</option>
                       <option value="gestor">Gestor</option>
                       <option value="professor">Professor</option>
-                      <option value="recepcionista">Recepcionista</option>
+                      <option value="responsavel">Responsável</option>
                     </select>
                   </div>
                   <div className="flex items-center space-x-2 pt-8">

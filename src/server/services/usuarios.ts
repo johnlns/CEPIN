@@ -6,7 +6,7 @@ import { z } from 'zod'
 const usuarioSchema = z.object({
   email: z.string().email('Email inválido'),
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  role: z.enum(['admin', 'gestor', 'professor', 'recepcionista']),
+  role: z.enum(['admin', 'gestor', 'professor', 'responsavel']),
 })
 
 export type CreateUsuarioData = z.infer<typeof usuarioSchema>
