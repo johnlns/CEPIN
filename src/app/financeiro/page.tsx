@@ -1,82 +1,76 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { DollarSign, TrendingUp, TrendingDown, FileText, Calendar, CreditCard } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { DollarSign, TrendingUp, TrendingDown, FileText, Calendar, CreditCard, ArrowLeft, Plus } from 'lucide-react'
+import Link from 'next/link'
 
-// Mock data - em produção viria dos serviços financeiros
-const cobrancas = [
-  {
-    id: '1',
-    aluno: 'Ana Clara Silva',
-    referencia: '2024-01 - Futebol Sub-10',
-    origem: 'modalidade',
-    valorCents: 12000,
-    status: 'pago',
-    createdAt: '2024-01-15',
-    paidAt: '2024-01-16'
-  },
-  {
-    id: '2',
-    aluno: 'Pedro Henrique Costa',
-    referencia: 'Personal Unimed - Janeiro',
-    origem: 'personal',
-    valorCents: 24000,
-    status: 'pendente',
-    createdAt: '2024-01-20',
-    paidAt: null
+interface Cobranca {
+  id: string
+  alunoId: string
+  referencia: string
+  origem: string
+  valorCents: number
+  status: string
+  createdAt: Date
+  paidAt: Date | null
+  aluno?: {
+    fullName: string
   }
-]
+}
 
-const boletimCaixa = [
-  {
-    id: '1',
-    data: '2024-01-20',
-    descricao: 'Recebimento mensalidade Ana Clara',
-    categoria: 'receita',
-    subcategoria: 'Modalidades',
-    origem: 'contrato',
-    valorCents: 12000,
-    forma: 'pix'
-  },
-  {
-    id: '2',
-    data: '2024-01-20',
-    descricao: 'Pagamento energia elétrica',
-    categoria: 'despesa',
-    subcategoria: 'Utilidades',
-    origem: 'outros',
-    valorCents: 80000,
-    forma: 'boleto'
-  }
-]
+interface BoletimItem {
+  id: string
+  data: Date
+  descricao: string
+  categoria: string
+  subcategoria: string
+  origem: string
+  valorCents: number
+  forma: string
+}
 
-const contasFixas = [
-  {
-    id: '1',
-    nome: 'Aluguel do Espaço',
-    valorCents: 250000,
-    vencimento: '2024-02-05',
-    status: 'aberto'
-  },
-  {
-    id: '2',
-    nome: 'Energia Elétrica',
-    valorCents: 80000,
-    vencimento: '2024-02-15',
-    status: 'pago'
-  }
-]
+interface DespesaFixa {
+  id: string
+  nome: string
+  valorCents: number
+  diavencimento: number
+  ativa: boolean
+}
 
 export default function FinanceiroPage() {
+  const [cobrancas, setCobrancas] = useState<Cobranca[]>([])
+  const [boletim, setBoletim] = useState<BoletimItem[]>([])
+  const [despesasFixas, setDespesasFixas] = useState<DespesaFixa[]>([])
+  const [loading, setLoading] = useState(false)
+  const [showFormCobranca, setShowFormCobranca] = useState(false)
+  const [showFormLancamento, setShowFormLancamento] = useState(false)
+  const [showFormDespesa, setShowFormDespesa] = useState(false)
+  
   const hoje = new Date().toISOString().split('T')[0]
   const mesAtual = hoje.substring(0, 7) // YYYY-MM
 
-  const totalReceitas = boletimCaixa
+  useEffect(() => {
+    carregarDados()
+  }, [])
+
+  const carregarDados = async () => {
+    // Por enquanto, dados mockados até integrar com as APIs
+    setCobrancas([])
+    setBoletim([])
+    setDespesasFixas([])
+  }
+
+  const totalReceitas = boletim
     .filter(item => item.categoria === 'receita')
     .reduce((sum, item) => sum + item.valorCents, 0)
 
-  const totalDespesas = boletimCaixa
+  const totalDespesas = boletim
     .filter(item => item.categoria === 'despesa')
     .reduce((sum, item) => sum + item.valorCents, 0)
 
@@ -87,7 +81,31 @@ export default function FinanceiroPage() {
     .filter(c => c.status === 'pendente')
     .reduce((sum, c) => sum + c.valorCents, 0)
 
-  const contasVencidas = contasFixas.filter(c => c.status === 'aberto').length
+  const handleGerarCobrancas = async () => {
+    if (!confirm('Deseja gerar as cobranças do mês para todos os alunos ativos?')) return
+    
+    setLoading(true)
+    try {
+      alert('Funcionalidade em desenvolvimento. Em breve as cobranças serão geradas automaticamente.')
+    } catch (error) {
+      console.error('Erro ao gerar cobranças:', error)
+      alert('Erro ao gerar cobranças')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMarcarPago = async (cobrancaId: string) => {
+    if (!confirm('Confirmar pagamento desta cobrança?')) return
+    
+    try {
+      alert('Funcionalidade em desenvolvimento. Em breve você poderá marcar cobranças como pagas.')
+      await carregarDados()
+    } catch (error) {
+      console.error('Erro ao marcar como pago:', error)
+      alert('Erro ao processar pagamento')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -95,13 +113,20 @@ export default function FinanceiroPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Financeiro</h1>
-              <p className="text-gray-600">Gestão financeira e controle de caixa</p>
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard">
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Financeiro</h1>
+                <p className="text-gray-600">Gestão financeira e controle de caixa</p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline">Voltar</Button>
-              <Button>
+              <Button onClick={handleGerarCobrancas} disabled={loading}>
                 <DollarSign className="h-4 w-4 mr-2" />
                 Gerar Cobranças
               </Button>
@@ -119,11 +144,11 @@ export default function FinanceiroPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                R$ {(totalReceitas / 100).toLocaleString('pt-BR')}
+                R$ {(totalReceitas / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-gray-500">
                 <TrendingUp className="h-3 w-3 inline mr-1" />
-                +12% vs mês anterior
+                Total recebido
               </p>
             </CardContent>
           </Card>
@@ -134,11 +159,11 @@ export default function FinanceiroPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                R$ {(totalDespesas / 100).toLocaleString('pt-BR')}
+                R$ {(totalDespesas / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-gray-500">
                 <TrendingDown className="h-3 w-3 inline mr-1" />
-                -5% vs mês anterior
+                Total gasto
               </p>
             </CardContent>
           </Card>
@@ -149,7 +174,7 @@ export default function FinanceiroPage() {
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                R$ {(saldo / 100).toLocaleString('pt-BR')}
+                R$ {(saldo / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-gray-500">
                 {saldo >= 0 ? 'Positivo' : 'Negativo'}
@@ -164,7 +189,7 @@ export default function FinanceiroPage() {
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{cobrancasPendentes}</div>
               <p className="text-xs text-gray-500">
-                R$ {(valorPendente / 100).toLocaleString('pt-BR')}
+                R$ {(valorPendente / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </CardContent>
           </Card>
@@ -195,191 +220,208 @@ export default function FinanceiroPage() {
           <TabsContent value="cobrancas" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Cobranças</h2>
-              <div className="flex space-x-2">
-                <Button variant="outline">
-                  Gerar Cobranças do Mês
-                </Button>
-                <Button>
-                  Nova Cobrança
-                </Button>
-              </div>
+              <Button onClick={() => setShowFormCobranca(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Cobrança
+              </Button>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Cobranças Pendentes</CardTitle>
-                <CardDescription>
-                  Cobranças aguardando pagamento
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {cobrancas.filter(c => c.status === 'pendente').map((cobranca) => (
-                    <div key={cobranca.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{cobranca.aluno}</div>
-                        <div className="text-sm text-gray-500">{cobranca.referencia}</div>
-                        <div className="text-xs text-gray-400">
-                          Criada em {new Date(cobranca.createdAt).toLocaleDateString('pt-BR')}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="font-medium">
-                            R$ {(cobranca.valorCents / 100).toLocaleString('pt-BR')}
+            {cobrancas.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-gray-500">
+                  <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>Nenhuma cobrança cadastrada ainda.</p>
+                  <p className="text-sm">Clique em &quot;Nova Cobrança&quot; ou &quot;Gerar Cobranças&quot; para começar.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cobranças Pendentes</CardTitle>
+                    <CardDescription>
+                      Cobranças aguardando pagamento
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {cobrancas.filter(c => c.status === 'pendente').map((cobranca) => (
+                        <div key={cobranca.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">{cobranca.aluno?.fullName || 'Aluno'}</div>
+                            <div className="text-sm text-gray-500">{cobranca.referencia}</div>
+                            <div className="text-xs text-gray-400">
+                              Criada em {new Date(cobranca.createdAt).toLocaleDateString('pt-BR')}
+                            </div>
                           </div>
-                          <Badge className="bg-yellow-100 text-yellow-800">
-                            Pendente
-                          </Badge>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-right">
+                              <div className="font-medium">
+                                R$ {(cobranca.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </div>
+                              <Badge className="bg-yellow-100 text-yellow-800">
+                                Pendente
+                              </Badge>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleMarcarPago(cobranca.id)}
+                            >
+                              Marcar Pago
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            Gerar Link PIX
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            Marcar Pago
-                          </Button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Cobranças Pagas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {cobrancas.filter(c => c.status === 'pago').map((cobranca) => (
-                    <div key={cobranca.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{cobranca.aluno}</div>
-                        <div className="text-sm text-gray-500">{cobranca.referencia}</div>
-                        <div className="text-xs text-gray-400">
-                          Pago em {new Date(cobranca.paidAt!).toLocaleDateString('pt-BR')}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="font-medium">
-                            R$ {(cobranca.valorCents / 100).toLocaleString('pt-BR')}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cobranças Pagas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {cobrancas.filter(c => c.status === 'pago').map((cobranca) => (
+                        <div key={cobranca.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">{cobranca.aluno?.fullName || 'Aluno'}</div>
+                            <div className="text-sm text-gray-500">{cobranca.referencia}</div>
+                            <div className="text-xs text-gray-400">
+                              Pago em {cobranca.paidAt ? new Date(cobranca.paidAt).toLocaleDateString('pt-BR') : '-'}
+                            </div>
                           </div>
-                          <Badge className="bg-green-100 text-green-800">
-                            Pago
-                          </Badge>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-right">
+                              <div className="font-medium">
+                                R$ {(cobranca.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </div>
+                              <Badge className="bg-green-100 text-green-800">
+                                Pago
+                              </Badge>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </TabsContent>
 
           {/* Caixa Tab */}
           <TabsContent value="caixa" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Boletim de Caixa</h2>
-              <Button>
+              <Button onClick={() => setShowFormLancamento(true)}>
+                <Plus className="h-4 w-4 mr-2" />
                 Novo Lançamento
               </Button>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Movimentações Recentes</CardTitle>
-                <CardDescription>
-                  Entradas e saídas de caixa
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {boletimCaixa.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{item.descricao}</div>
-                        <div className="text-sm text-gray-500">
-                          {new Date(item.data).toLocaleDateString('pt-BR')} • {item.subcategoria}
+            {boletim.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-gray-500">
+                  <DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>Nenhuma movimentação registrada ainda.</p>
+                  <p className="text-sm">Clique em &quot;Novo Lançamento&quot; para começar.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Movimentações Recentes</CardTitle>
+                  <CardDescription>
+                    Entradas e saídas de caixa
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {boletim.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{item.descricao}</div>
+                          <div className="text-sm text-gray-500">
+                            {new Date(item.data).toLocaleDateString('pt-BR')} • {item.subcategoria}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {item.origem} • {item.forma}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-400">
-                          {item.origem} • {item.forma}
+                        <div className="flex items-center space-x-4">
+                          <div className={`text-right font-medium ${
+                            item.categoria === 'receita' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {item.categoria === 'receita' ? '+' : '-'}R$ {(item.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </div>
+                          <Badge className={
+                            item.categoria === 'receita' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }>
+                            {item.categoria === 'receita' ? 'Receita' : 'Despesa'}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-4">
-                        <div className={`text-right font-medium ${
-                          item.categoria === 'receita' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {item.categoria === 'receita' ? '+' : '-'}R$ {(item.valorCents / 100).toLocaleString('pt-BR')}
-                        </div>
-                        <Badge className={
-                          item.categoria === 'receita' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }>
-                          {item.categoria === 'receita' ? 'Receita' : 'Despesa'}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Contas Fixas Tab */}
           <TabsContent value="contas-fixas" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Contas Fixas</h2>
-              <div className="flex space-x-2">
-                <Button variant="outline">
-                  Gerar Contas do Mês
-                </Button>
-                <Button>
-                  Nova Conta Fixa
-                </Button>
-              </div>
+              <h2 className="text-lg font-semibold">Despesas Fixas</h2>
+              <Button onClick={() => setShowFormDespesa(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Despesa Fixa
+              </Button>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Contas do Mês</CardTitle>
-                <CardDescription>
-                  Contas fixas para {mesAtual}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {contasFixas.map((conta) => (
-                    <div key={conta.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{conta.nome}</div>
-                        <div className="text-sm text-gray-500">
-                          Vencimento: {new Date(conta.vencimento).toLocaleDateString('pt-BR')}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="font-medium">
-                            R$ {(conta.valorCents / 100).toLocaleString('pt-BR')}
+            {despesasFixas.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>Nenhuma despesa fixa cadastrada ainda.</p>
+                  <p className="text-sm">Clique em &quot;Nova Despesa Fixa&quot; para começar.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Despesas Fixas Mensais</CardTitle>
+                  <CardDescription>
+                    Contas que se repetem mensalmente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {despesasFixas.filter(d => d.ativa).map((despesa) => (
+                      <div key={despesa.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{despesa.nome}</div>
+                          <div className="text-sm text-gray-500">
+                            Vencimento: dia {despesa.diavencimento}
                           </div>
-                          <Badge className={
-                            conta.status === 'pago' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }>
-                            {conta.status === 'pago' ? 'Pago' : 'Pendente'}
-                          </Badge>
                         </div>
-                        {conta.status !== 'pago' && (
-                          <Button variant="outline" size="sm">
-                            Marcar Pago
-                          </Button>
-                        )}
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <div className="font-medium">
+                              R$ {(despesa.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </div>
+                            <Badge className="bg-blue-100 text-blue-800">
+                              Mensal
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Relatórios Tab */}
@@ -422,19 +464,19 @@ export default function FinanceiroPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      R$ {(totalReceitas / 100).toLocaleString('pt-BR')}
+                      R$ {(totalReceitas / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
                     <div className="text-sm text-gray-500">Receitas</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-red-600">
-                      R$ {(totalDespesas / 100).toLocaleString('pt-BR')}
+                      R$ {(totalDespesas / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
                     <div className="text-sm text-gray-500">Despesas</div>
                   </div>
                   <div className="text-center">
                     <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      R$ {(saldo / 100).toLocaleString('pt-BR')}
+                      R$ {(saldo / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
                     <div className="text-sm text-gray-500">Saldo Líquido</div>
                   </div>
@@ -443,6 +485,38 @@ export default function FinanceiroPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Modal Placeholder */}
+        {(showFormCobranca || showFormLancamento || showFormDespesa) && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>
+                  {showFormCobranca && 'Nova Cobrança'}
+                  {showFormLancamento && 'Novo Lançamento'}
+                  {showFormDespesa && 'Nova Despesa Fixa'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Funcionalidade em desenvolvimento. Em breve você poderá cadastrar diretamente aqui.
+                </p>
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowFormCobranca(false)
+                      setShowFormLancamento(false)
+                      setShowFormDespesa(false)
+                    }}
+                  >
+                    Fechar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   )
