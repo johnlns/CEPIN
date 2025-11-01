@@ -1,0 +1,7 @@
+{
+  "/admin/page": "app/admin/page.js",
+  "/vendas/diarias/nova/page": "app/vendas/diarias/nova/page.js",
+  "/admin/tipos-venda/page": "app/admin/tipos-venda/page.js",
+  "/login/page": "app/login/page.js",
+  "/admin/modalidades/page": "app/admin/modalidades/page.js"
+}
