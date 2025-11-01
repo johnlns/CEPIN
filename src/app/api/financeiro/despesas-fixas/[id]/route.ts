@@ -48,9 +48,9 @@ export async function DELETE(
 
     const { id } = await context.params
 
-    // Marcar como inativa ao invés de deletar
+    // Marcar como inativo ao invés de deletar
     const [despesa] = await drizzleDb.update(despesasFixas)
-      .set({ ativa: false })
+      .set({ ativo: false })
       .where(eq(despesasFixas.id, id))
       .returning()
 

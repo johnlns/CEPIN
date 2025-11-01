@@ -38,9 +38,11 @@ interface BoletimItem {
 interface DespesaFixa {
   id: string
   nome: string
-  valorCents: number
-  diavencimento: number
-  ativa: boolean
+  categoria: string
+  valorPadraoCents: number
+  vencimentoDia: number
+  ativo: boolean
+  observacoes?: string | null
 }
 
 export default function FinanceiroPage() {
@@ -54,8 +56,10 @@ export default function FinanceiroPage() {
   
   const [formDespesa, setFormDespesa] = useState({
     nome: '',
-    valorCents: 0,
-    diavencimento: 1,
+    categoria: 'utilidades' as 'pessoal' | 'utilidades' | 'impostos' | 'negociacao' | 'reserva',
+    valorPadraoCents: 0,
+    vencimentoDia: 1,
+    observacoes: '',
   })
 
   const [formLancamento, setFormLancamento] = useState({
@@ -72,6 +76,7 @@ export default function FinanceiroPage() {
 
   useEffect(() => {
     carregarDados()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const carregarDados = async () => {
@@ -177,7 +182,7 @@ export default function FinanceiroPage() {
   }
 
   const handleSalvarDespesa = async () => {
-    if (!formDespesa.nome || formDespesa.valorCents <= 0) {
+    if (!formDespesa.nome || formDespesa.valorPadraoCents <= 0) {
       alert('Preencha todos os campos obrigatórios')
       return
     }
@@ -194,7 +199,7 @@ export default function FinanceiroPage() {
       if (data.success) {
         alert('Despesa fixa cadastrada com sucesso!')
         setShowFormDespesa(false)
-        setFormDespesa({ nome: '', valorCents: 0, diavencimento: 1 })
+        setFormDespesa({ nome: '', categoria: 'utilidades', valorPadraoCents: 0, vencimentoDia: 1, observacoes: '' })
         await carregarDados()
       } else {
         alert(data.message || 'Erro ao cadastrar despesa')
@@ -565,13 +570,13 @@ export default function FinanceiroPage() {
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">{despesa.nome}</div>
                           <div className="text-sm text-gray-500">
-                            Vencimento: dia {despesa.diavencimento}
+                            Vencimento: dia {despesa.vencimentoDia}
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
                             <div className="font-medium">
-                              R$ {(despesa.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              R$ {(despesa.valorPadraoCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </div>
                             <Badge className="bg-blue-100 text-blue-800">
                               Mensal
@@ -667,13 +672,28 @@ export default function FinanceiroPage() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="categoria">Categoria *</Label>
+                  <select
+                    id="categoria"
+                    value={formDespesa.categoria}
+                    onChange={(e) => setFormDespesa({ ...formDespesa, categoria: e.target.value as any })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="utilidades">Utilidades</option>
+                    <option value="pessoal">Pessoal</option>
+                    <option value="impostos">Impostos</option>
+                    <option value="negociacao">Negociação</option>
+                    <option value="reserva">Reserva</option>
+                  </select>
+                </div>
+                <div>
                   <Label htmlFor="valor">Valor (R$) *</Label>
                   <Input
                     id="valor"
                     type="number"
                     step="0.01"
-                    value={formDespesa.valorCents / 100}
-                    onChange={(e) => setFormDespesa({ ...formDespesa, valorCents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                    value={formDespesa.valorPadraoCents / 100}
+                    onChange={(e) => setFormDespesa({ ...formDespesa, valorPadraoCents: Math.round(parseFloat(e.target.value || '0') * 100) })}
                     placeholder="0,00"
                   />
                 </div>
@@ -684,8 +704,17 @@ export default function FinanceiroPage() {
                     type="number"
                     min="1"
                     max="31"
-                    value={formDespesa.diavencimento}
-                    onChange={(e) => setFormDespesa({ ...formDespesa, diavencimento: parseInt(e.target.value || '1') })}
+                    value={formDespesa.vencimentoDia}
+                    onChange={(e) => setFormDespesa({ ...formDespesa, vencimentoDia: parseInt(e.target.value || '1') })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="observacoes">Observações</Label>
+                  <Input
+                    id="observacoes"
+                    value={formDespesa.observacoes}
+                    onChange={(e) => setFormDespesa({ ...formDespesa, observacoes: e.target.value })}
+                    placeholder="Informações adicionais (opcional)"
                   />
                 </div>
                 <div className="flex justify-end space-x-2 pt-4">
@@ -693,7 +722,7 @@ export default function FinanceiroPage() {
                     variant="outline"
                     onClick={() => {
                       setShowFormDespesa(false)
-                      setFormDespesa({ nome: '', valorCents: 0, diavencimento: 1 })
+                      setFormDespesa({ nome: '', categoria: 'utilidades', valorPadraoCents: 0, vencimentoDia: 1, observacoes: '' })
                     }}
                   >
                     Cancelar

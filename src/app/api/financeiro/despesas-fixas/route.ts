@@ -7,8 +7,10 @@ import { z } from 'zod'
 
 const despesaSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  valorCents: z.number().positive('Valor deve ser positivo'),
-  diavencimento: z.number().min(1).max(31, 'Dia deve estar entre 1 e 31'),
+  categoria: z.enum(['pessoal', 'utilidades', 'impostos', 'negociacao', 'reserva']).default('utilidades'),
+  valorPadraoCents: z.number().positive('Valor deve ser positivo'),
+  vencimentoDia: z.number().min(1).max(31, 'Dia deve estar entre 1 e 31'),
+  observacoes: z.string().optional(),
 })
 
 export async function GET() {
@@ -19,8 +21,8 @@ export async function GET() {
     }
 
     const despesas = await drizzleDb.query.despesasFixas.findMany({
-      where: eq(despesasFixas.ativa, true),
-      orderBy: (despesas, { asc }) => [asc(despesas.diavencimento)]
+      where: eq(despesasFixas.ativo, true),
+      orderBy: (despesas, { asc }) => [asc(despesas.vencimentoDia)]
     })
     
     return NextResponse.json({ success: true, despesas })
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const [despesa] = await drizzleDb.insert(despesasFixas).values({
       ...validatedData,
-      ativa: true,
+      ativo: true,
     }).returning()
     
     return NextResponse.json({ success: true, despesa }, { status: 201 })
