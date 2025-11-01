@@ -240,7 +240,7 @@ export async function gerarCobrancasMensais(referenciaMes: string) {
 
       const [cobranca] = await tx.insert(cobrancas).values({
         alunoId: matricula.alunoId,
-        referencia: `${referenciaMes} - ${matricula.turma.nome}`,
+        referencia: `${referenciaMes} - ${(matricula as any).turma?.nome ?? 'Turma'}`,
         origem: 'modalidade',
         valorCents: valorCobranca,
         status: 'pendente',
