@@ -138,7 +138,7 @@ export async function updateMatriculaStatus(id: string, status: 'ativa' | 'tranc
 
     const capacidadeOcupada = matriculasAtivas[0]?.count || 0
     
-    if (capacidadeOcupada >= matricula.turma.capacidade) {
+    if (capacidadeOcupada >= (matricula as any).turma?.capacidade) {
       throw new Error('Turma já está na capacidade máxima')
     }
   }
