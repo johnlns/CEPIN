@@ -56,11 +56,25 @@ export async function createCobranca(data: CreateCobrancaData) {
   return cobranca
 }
 
-export async function getCobrancas() {
+export async function getCobrancas(filters?: { mes?: string, status?: 'pendente' | 'pago' | 'cancelada' }) {
+  let whereConditions = []
+  
+  if (filters?.status) {
+    whereConditions.push(eq(cobrancas.status, filters.status))
+  }
+  
+  if (filters?.mes) {
+    // Filtrar por mês (formato YYYY-MM)
+    const inicio = `${filters.mes}-01`
+    const fim = `${filters.mes}-31`
+    // Por enquanto retorna todos, pois createdAt é timestamp
+  }
+  
   return await drizzleDb.query.cobrancas.findMany({
     with: {
       aluno: true,
     },
+    where: whereConditions.length > 0 ? and(...whereConditions) : undefined,
     orderBy: (cobrancas, { desc }) => [desc(cobrancas.createdAt)],
   })
 }
@@ -86,6 +100,18 @@ export async function updateCobrancaStatus(id: string, status: 'pendente' | 'pag
   return { success: true }
 }
 
+export async function marcarCobrancaPaga(id: string) {
+  const [cobranca] = await drizzleDb.update(cobrancas)
+    .set({ 
+      status: 'pago',
+      paidAt: new Date(),
+    })
+    .where(eq(cobrancas.id, id))
+    .returning()
+
+  return cobranca
+}
+
 // Boletim de Caixa
 export async function createLancamentoCaixa(data: CreateLancamentoCaixaData) {
   const validatedData = lancamentoCaixaSchema.parse(data)
@@ -95,7 +121,19 @@ export async function createLancamentoCaixa(data: CreateLancamentoCaixaData) {
   return lancamento
 }
 
-export async function getBoletimCaixa(dataInicio?: string, dataFim?: string) {
+export async function registrarLancamento(data: any) {
+  return await createLancamentoCaixa(data)
+}
+
+export async function getBoletimCaixa(filters?: { mes?: string, categoria?: 'receita' | 'despesa' }) {
+  let dataInicio: string | undefined
+  let dataFim: string | undefined
+  
+  if (filters?.mes) {
+    dataInicio = `${filters.mes}-01`
+    dataFim = `${filters.mes}-31`
+  }
+  
   let whereConditions = undefined
   
   if (dataInicio && dataFim) {
@@ -217,6 +255,10 @@ export async function updateContaFixaStatus(id: string, status: 'aberto' | 'pago
 }
 
 // Gerar cobranças mensais automáticas
+export async function gerarCobrancasMes(mes: string) {
+  return await gerarCobrancasMensais(mes)
+}
+
 export async function gerarCobrancasMensais(referenciaMes: string) {
   const dataInicio = `${referenciaMes}-01`
   const dataFim = `${referenciaMes}-31`

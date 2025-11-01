@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { DollarSign, TrendingUp, TrendingDown, FileText, Calendar, CreditCard, ArrowLeft, Plus } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, FileText, Calendar, CreditCard, ArrowLeft, Plus, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 interface Cobranca {
@@ -17,8 +17,8 @@ interface Cobranca {
   origem: string
   valorCents: number
   status: string
-  createdAt: Date
-  paidAt: Date | null
+  createdAt: Date | string
+  paidAt: Date | string | null
   aluno?: {
     fullName: string
   }
@@ -26,7 +26,7 @@ interface Cobranca {
 
 interface BoletimItem {
   id: string
-  data: Date
+  data: Date | string
   descricao: string
   categoria: string
   subcategoria: string
@@ -52,6 +52,21 @@ export default function FinanceiroPage() {
   const [showFormLancamento, setShowFormLancamento] = useState(false)
   const [showFormDespesa, setShowFormDespesa] = useState(false)
   
+  const [formDespesa, setFormDespesa] = useState({
+    nome: '',
+    valorCents: 0,
+    diavencimento: 1,
+  })
+
+  const [formLancamento, setFormLancamento] = useState({
+    descricao: '',
+    categoria: 'receita' as 'receita' | 'despesa',
+    subcategoria: '',
+    valorCents: 0,
+    forma: 'dinheiro',
+    data: new Date().toISOString().split('T')[0]
+  })
+  
   const hoje = new Date().toISOString().split('T')[0]
   const mesAtual = hoje.substring(0, 7) // YYYY-MM
 
@@ -60,10 +75,39 @@ export default function FinanceiroPage() {
   }, [])
 
   const carregarDados = async () => {
-    // Por enquanto, dados mockados até integrar com as APIs
-    setCobrancas([])
-    setBoletim([])
-    setDespesasFixas([])
+    setLoading(true)
+    try {
+      // Carregar cobranças
+      const resCobrancas = await fetch(`/api/financeiro/cobrancas?mes=${mesAtual}`)
+      if (resCobrancas.ok) {
+        const dataCobrancas = await resCobrancas.json()
+        if (dataCobrancas.success) {
+          setCobrancas(dataCobrancas.cobrancas)
+        }
+      }
+
+      // Carregar boletim
+      const resBoletim = await fetch(`/api/financeiro/boletim?mes=${mesAtual}`)
+      if (resBoletim.ok) {
+        const dataBoletim = await resBoletim.json()
+        if (dataBoletim.success) {
+          setBoletim(dataBoletim.boletim)
+        }
+      }
+
+      // Carregar despesas fixas
+      const resDespesas = await fetch('/api/financeiro/despesas-fixas')
+      if (resDespesas.ok) {
+        const dataDespesas = await resDespesas.json()
+        if (dataDespesas.success) {
+          setDespesasFixas(dataDespesas.despesas)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados financeiros:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const totalReceitas = boletim
@@ -86,7 +130,20 @@ export default function FinanceiroPage() {
     
     setLoading(true)
     try {
-      alert('Funcionalidade em desenvolvimento. Em breve as cobranças serão geradas automaticamente.')
+      const response = await fetch('/api/financeiro/cobrancas/gerar-mes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mes: mesAtual })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert(data.message)
+        await carregarDados()
+      } else {
+        alert(data.message || 'Erro ao gerar cobranças')
+      }
     } catch (error) {
       console.error('Erro ao gerar cobranças:', error)
       alert('Erro ao gerar cobranças')
@@ -99,11 +156,91 @@ export default function FinanceiroPage() {
     if (!confirm('Confirmar pagamento desta cobrança?')) return
     
     try {
-      alert('Funcionalidade em desenvolvimento. Em breve você poderá marcar cobranças como pagas.')
-      await carregarDados()
+      const response = await fetch(`/api/financeiro/cobrancas/${cobrancaId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao: 'marcar_pago' })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('Pagamento confirmado!')
+        await carregarDados()
+      } else {
+        alert(data.message || 'Erro ao marcar como pago')
+      }
     } catch (error) {
       console.error('Erro ao marcar como pago:', error)
       alert('Erro ao processar pagamento')
+    }
+  }
+
+  const handleSalvarDespesa = async () => {
+    if (!formDespesa.nome || formDespesa.valorCents <= 0) {
+      alert('Preencha todos os campos obrigatórios')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/financeiro/despesas-fixas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formDespesa)
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('Despesa fixa cadastrada com sucesso!')
+        setShowFormDespesa(false)
+        setFormDespesa({ nome: '', valorCents: 0, diavencimento: 1 })
+        await carregarDados()
+      } else {
+        alert(data.message || 'Erro ao cadastrar despesa')
+      }
+    } catch (error) {
+      console.error('Erro ao salvar despesa:', error)
+      alert('Erro ao salvar despesa')
+    }
+  }
+
+  const handleSalvarLancamento = async () => {
+    if (!formLancamento.descricao || formLancamento.valorCents <= 0) {
+      alert('Preencha todos os campos obrigatórios')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/financeiro/boletim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formLancamento,
+          origem: 'manual'
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('Lançamento registrado com sucesso!')
+        setShowFormLancamento(false)
+        setFormLancamento({ 
+          descricao: '', 
+          categoria: 'receita', 
+          subcategoria: '', 
+          valorCents: 0, 
+          forma: 'dinheiro',
+          data: new Date().toISOString().split('T')[0]
+        })
+        await carregarDados()
+      } else {
+        alert(data.message || 'Erro ao registrar lançamento')
+      }
+    } catch (error) {
+      console.error('Erro ao salvar lançamento:', error)
+      alert('Erro ao salvar lançamento')
     }
   }
 
@@ -127,7 +264,7 @@ export default function FinanceiroPage() {
             </div>
             <div className="flex items-center space-x-4">
               <Button onClick={handleGerarCobrancas} disabled={loading}>
-                <DollarSign className="h-4 w-4 mr-2" />
+                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <DollarSign className="h-4 w-4 mr-2" />}
                 Gerar Cobranças
               </Button>
             </div>
@@ -208,7 +345,7 @@ export default function FinanceiroPage() {
             </TabsTrigger>
             <TabsTrigger value="contas-fixas">
               <Calendar className="h-4 w-4 mr-2" />
-              Contas Fixas
+              Despesas Fixas
             </TabsTrigger>
             <TabsTrigger value="relatorios">
               <FileText className="h-4 w-4 mr-2" />
@@ -226,87 +363,98 @@ export default function FinanceiroPage() {
               </Button>
             </div>
 
-            {cobrancas.length === 0 ? (
+            {loading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Loader2 className="h-12 w-12 mx-auto mb-4 text-gray-400 animate-spin" />
+                  <p className="text-gray-500">Carregando...</p>
+                </CardContent>
+              </Card>
+            ) : cobrancas.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center text-gray-500">
                   <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                   <p>Nenhuma cobrança cadastrada ainda.</p>
-                  <p className="text-sm">Clique em &quot;Nova Cobrança&quot; ou &quot;Gerar Cobranças&quot; para começar.</p>
+                  <p className="text-sm">Clique em &quot;Gerar Cobranças&quot; para criar cobranças automáticas.</p>
                 </CardContent>
               </Card>
             ) : (
               <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cobranças Pendentes</CardTitle>
-                    <CardDescription>
-                      Cobranças aguardando pagamento
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {cobrancas.filter(c => c.status === 'pendente').map((cobranca) => (
-                        <div key={cobranca.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">{cobranca.aluno?.fullName || 'Aluno'}</div>
-                            <div className="text-sm text-gray-500">{cobranca.referencia}</div>
-                            <div className="text-xs text-gray-400">
-                              Criada em {new Date(cobranca.createdAt).toLocaleDateString('pt-BR')}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                              <div className="font-medium">
-                                R$ {(cobranca.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                {cobrancas.filter(c => c.status === 'pendente').length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Cobranças Pendentes</CardTitle>
+                      <CardDescription>
+                        Cobranças aguardando pagamento
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {cobrancas.filter(c => c.status === 'pendente').map((cobranca) => (
+                          <div key={cobranca.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">{cobranca.aluno?.fullName || 'Aluno'}</div>
+                              <div className="text-sm text-gray-500">{cobranca.referencia}</div>
+                              <div className="text-xs text-gray-400">
+                                Criada em {new Date(cobranca.createdAt).toLocaleDateString('pt-BR')}
                               </div>
-                              <Badge className="bg-yellow-100 text-yellow-800">
-                                Pendente
-                              </Badge>
                             </div>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleMarcarPago(cobranca.id)}
-                            >
-                              Marcar Pago
-                            </Button>
+                            <div className="flex items-center space-x-4">
+                              <div className="text-right">
+                                <div className="font-medium">
+                                  R$ {(cobranca.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </div>
+                                <Badge className="bg-yellow-100 text-yellow-800">
+                                  Pendente
+                                </Badge>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleMarcarPago(cobranca.id)}
+                              >
+                                Marcar Pago
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cobranças Pagas</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {cobrancas.filter(c => c.status === 'pago').map((cobranca) => (
-                        <div key={cobranca.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">{cobranca.aluno?.fullName || 'Aluno'}</div>
-                            <div className="text-sm text-gray-500">{cobranca.referencia}</div>
-                            <div className="text-xs text-gray-400">
-                              Pago em {cobranca.paidAt ? new Date(cobranca.paidAt).toLocaleDateString('pt-BR') : '-'}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                              <div className="font-medium">
-                                R$ {(cobranca.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                {cobrancas.filter(c => c.status === 'pago').length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Cobranças Pagas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {cobrancas.filter(c => c.status === 'pago').map((cobranca) => (
+                          <div key={cobranca.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">{cobranca.aluno?.fullName || 'Aluno'}</div>
+                              <div className="text-sm text-gray-500">{cobranca.referencia}</div>
+                              <div className="text-xs text-gray-400">
+                                Pago em {cobranca.paidAt ? new Date(cobranca.paidAt).toLocaleDateString('pt-BR') : '-'}
                               </div>
-                              <Badge className="bg-green-100 text-green-800">
-                                Pago
-                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <div className="text-right">
+                                <div className="font-medium">
+                                  R$ {(cobranca.valorCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </div>
+                                <Badge className="bg-green-100 text-green-800">
+                                  Pago
+                                </Badge>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </TabsContent>
@@ -321,7 +469,14 @@ export default function FinanceiroPage() {
               </Button>
             </div>
 
-            {boletim.length === 0 ? (
+            {loading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Loader2 className="h-12 w-12 mx-auto mb-4 text-gray-400 animate-spin" />
+                  <p className="text-gray-500">Carregando...</p>
+                </CardContent>
+              </Card>
+            ) : boletim.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center text-gray-500">
                   <DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-400" />
@@ -370,7 +525,7 @@ export default function FinanceiroPage() {
             )}
           </TabsContent>
 
-          {/* Contas Fixas Tab */}
+          {/* Despesas Fixas Tab */}
           <TabsContent value="contas-fixas" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Despesas Fixas</h2>
@@ -380,7 +535,14 @@ export default function FinanceiroPage() {
               </Button>
             </div>
 
-            {despesasFixas.length === 0 ? (
+            {loading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Loader2 className="h-12 w-12 mx-auto mb-4 text-gray-400 animate-spin" />
+                  <p className="text-gray-500">Carregando...</p>
+                </CardContent>
+              </Card>
+            ) : despesasFixas.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center text-gray-500">
                   <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
@@ -398,7 +560,7 @@ export default function FinanceiroPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {despesasFixas.filter(d => d.ativa).map((despesa) => (
+                    {despesasFixas.map((despesa) => (
                       <div key={despesa.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">{despesa.nome}</div>
@@ -486,29 +648,182 @@ export default function FinanceiroPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Modal Placeholder */}
-        {(showFormCobranca || showFormLancamento || showFormDespesa) && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        {/* Modal Nova Despesa Fixa */}
+        {showFormDespesa && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md">
               <CardHeader>
-                <CardTitle>
-                  {showFormCobranca && 'Nova Cobrança'}
-                  {showFormLancamento && 'Novo Lançamento'}
-                  {showFormDespesa && 'Nova Despesa Fixa'}
-                </CardTitle>
+                <CardTitle>Nova Despesa Fixa</CardTitle>
+                <CardDescription>Cadastrar uma despesa que se repete mensalmente</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="nome">Nome da Despesa *</Label>
+                  <Input
+                    id="nome"
+                    value={formDespesa.nome}
+                    onChange={(e) => setFormDespesa({ ...formDespesa, nome: e.target.value })}
+                    placeholder="Ex: Aluguel, Energia, Internet"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="valor">Valor (R$) *</Label>
+                  <Input
+                    id="valor"
+                    type="number"
+                    step="0.01"
+                    value={formDespesa.valorCents / 100}
+                    onChange={(e) => setFormDespesa({ ...formDespesa, valorCents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                    placeholder="0,00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dia">Dia do Vencimento *</Label>
+                  <Input
+                    id="dia"
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={formDespesa.diavencimento}
+                    onChange={(e) => setFormDespesa({ ...formDespesa, diavencimento: parseInt(e.target.value || '1') })}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowFormDespesa(false)
+                      setFormDespesa({ nome: '', valorCents: 0, diavencimento: 1 })
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSalvarDespesa}>
+                    Salvar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Modal Novo Lançamento */}
+        {showFormLancamento && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Novo Lançamento</CardTitle>
+                <CardDescription>Registrar entrada ou saída de caixa</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="descricao">Descrição *</Label>
+                  <Input
+                    id="descricao"
+                    value={formLancamento.descricao}
+                    onChange={(e) => setFormLancamento({ ...formLancamento, descricao: e.target.value })}
+                    placeholder="Ex: Venda de produto, Pagamento de conta"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="categoria">Tipo *</Label>
+                  <select
+                    id="categoria"
+                    value={formLancamento.categoria}
+                    onChange={(e) => setFormLancamento({ ...formLancamento, categoria: e.target.value as 'receita' | 'despesa' })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="receita">Receita (Entrada)</option>
+                    <option value="despesa">Despesa (Saída)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="subcategoria">Categoria</Label>
+                  <Input
+                    id="subcategoria"
+                    value={formLancamento.subcategoria}
+                    onChange={(e) => setFormLancamento({ ...formLancamento, subcategoria: e.target.value })}
+                    placeholder="Ex: Vendas, Utilidades"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="valorLanc">Valor (R$) *</Label>
+                  <Input
+                    id="valorLanc"
+                    type="number"
+                    step="0.01"
+                    value={formLancamento.valorCents / 100}
+                    onChange={(e) => setFormLancamento({ ...formLancamento, valorCents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                    placeholder="0,00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="forma">Forma de Pagamento *</Label>
+                  <select
+                    id="forma"
+                    value={formLancamento.forma}
+                    onChange={(e) => setFormLancamento({ ...formLancamento, forma: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="pix">PIX</option>
+                    <option value="cartao_credito">Cartão de Crédito</option>
+                    <option value="cartao_debito">Cartão de Débito</option>
+                    <option value="boleto">Boleto</option>
+                    <option value="transferencia">Transferência</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="data">Data *</Label>
+                  <Input
+                    id="data"
+                    type="date"
+                    value={formLancamento.data}
+                    onChange={(e) => setFormLancamento({ ...formLancamento, data: e.target.value })}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowFormLancamento(false)
+                      setFormLancamento({ 
+                        descricao: '', 
+                        categoria: 'receita', 
+                        subcategoria: '', 
+                        valorCents: 0, 
+                        forma: 'dinheiro',
+                        data: new Date().toISOString().split('T')[0]
+                      })
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSalvarLancamento}>
+                    Salvar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Modal Nova Cobrança */}
+        {showFormCobranca && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Nova Cobrança</CardTitle>
+                <CardDescription>Criar cobrança manual para um aluno</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-4">
-                  Funcionalidade em desenvolvimento. Em breve você poderá cadastrar diretamente aqui.
+                  Esta funcionalidade permite criar cobranças avulsas. Para cobranças de mensalidades, use &quot;Gerar Cobranças&quot;.
                 </p>
                 <div className="flex justify-end space-x-2">
                   <Button 
                     variant="outline"
-                    onClick={() => {
-                      setShowFormCobranca(false)
-                      setShowFormLancamento(false)
-                      setShowFormDespesa(false)
-                    }}
+                    onClick={() => setShowFormCobranca(false)}
                   >
                     Fechar
                   </Button>
