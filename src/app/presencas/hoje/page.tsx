@@ -143,17 +143,16 @@ export default function PresencasHojePage() {
                   Voltar
                 </Button>
               </Link>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Presenças - Hoje</h1>
-                  <p className="text-gray-600">
-                    {new Date().toLocaleDateString('pt-BR', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Presenças - Hoje</h1>
+                <p className="text-gray-600">
+                  {new Date().toLocaleDateString('pt-BR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
