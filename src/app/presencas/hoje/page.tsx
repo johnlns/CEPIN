@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, XCircle, Clock, Users, Calendar } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Users, Calendar, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 // Mock data - em produção viria do serviço de presenças
 const turmasHoje = [
@@ -135,16 +136,25 @@ export default function PresencasHojePage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Presenças - Hoje</h1>
-              <p className="text-gray-600">
-                {new Date().toLocaleDateString('pt-BR', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard">
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar
+                </Button>
+              </Link>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Presenças - Hoje</h1>
+                  <p className="text-gray-600">
+                    {new Date().toLocaleDateString('pt-BR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={handleOutroDia}>

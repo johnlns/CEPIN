@@ -123,6 +123,12 @@ export default function AdminUsuariosPage() {
           }),
         })
         
+        if (!response.ok) {
+          const error = await response.json()
+          alert(error.message || 'Erro ao atualizar usuário')
+          return
+        }
+        
         const data = await response.json()
         
         if (!data.success) {
@@ -142,6 +148,12 @@ export default function AdminUsuariosPage() {
             role: formData.role,
           }),
         })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          alert(error.message || 'Erro ao criar usuário')
+          return
+        }
         
         const data = await response.json()
         
@@ -163,9 +175,9 @@ export default function AdminUsuariosPage() {
       
       // Recarregar lista
       await carregarUsuarios()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar usuário:', error)
-      alert('Erro ao salvar usuário')
+      alert(`Erro ao salvar usuário: ${error.message || 'Erro desconhecido'}`)
     }
   }
 
