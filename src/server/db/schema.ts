@@ -8,7 +8,7 @@ export const users = sqliteTable('users', {
   name: text('name').notNull(),
   role: text('role', { enum: ['admin', 'gestor', 'professor', 'responsavel'] })
     .notNull().default('responsavel'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 export const alunos = sqliteTable('alunos', {
@@ -16,7 +16,7 @@ export const alunos = sqliteTable('alunos', {
   fullName: text('full_name').notNull(),
   birthdate: text('birthdate').notNull(), // ISO date string
   notes: text('notes'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 export const alunosSaude = sqliteTable('alunos_saude', {
@@ -64,7 +64,7 @@ export const turmas = sqliteTable('turmas', {
   faixaEtaria: text('faixa_etaria').notNull(),
   capacidade: integer('capacidade').notNull(),
   professorId: text('professor_id').notNull().references(() => users.id),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 export const turmaHorarios = sqliteTable('turma_horarios', {
@@ -148,7 +148,7 @@ export const cobrancas = sqliteTable('cobrancas', {
   status: text('status', { enum: ['pendente', 'pago', 'cancelado'] }).notNull().default('pendente'),
   mpPreferenceId: text('mp_preference_id'),
   mpPaymentId: text('mp_payment_id'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
   paidAt: integer('paid_at', { mode: 'timestamp' }),
 })
 
@@ -163,7 +163,7 @@ export const boletimCaixa = sqliteTable('boletim_caixa', {
   forma: text('forma', { enum: ['pix', 'cartao', 'dinheiro', 'boleto', 'transferencia'] }).notNull(),
   documentoRef: text('documento_ref'),
   usuarioId: text('usuario_id').references(() => users.id),
-  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 // Despesas Fixas - Baseado na imagem fornecida
@@ -197,7 +197,7 @@ export const receitasMensais = sqliteTable('receitas_mensais', {
   categoria: text('categoria').notNull(), // ex: 'EM CAIXA', 'ACADEMIA', 'PERSONAL', etc.
   valorCents: integer('valor_cents').notNull(),
   observacoes: text('observacoes'),
-  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 // Controle de Atendimentos - Baseado na imagem fornecida
@@ -210,7 +210,7 @@ export const atendimentos = sqliteTable('atendimentos', {
   tipoPagamento: text('tipo_pagamento', { enum: ['unimed', 'particular', 'reembolso'] }).notNull(),
   status: text('status', { enum: ['agendado', 'realizado', 'faltou', 'cancelado'] }).notNull().default('agendado'),
   observacoes: text('observacoes'),
-  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 // Boletim de Caixa - Baseado na imagem fornecida
@@ -223,7 +223,7 @@ export const boletimCaixaDetalhado = sqliteTable('boletim_caixa_detalhado', {
   valorCents: integer('valor_cents').notNull(),
   observacoes: text('observacoes'),
   usuarioId: text('usuario_id').references(() => users.id),
-  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 // Contratos & Documentos
@@ -242,7 +242,7 @@ export const sessions = sqliteTable('sessions', {
   token: text('token').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 export const emailOtps = sqliteTable('email_otps', {
@@ -251,7 +251,7 @@ export const emailOtps = sqliteTable('email_otps', {
   codeHash: text('code_hash').notNull(),
   attempts: integer('attempts').notNull().default(0),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 // Relações para queries
@@ -293,7 +293,7 @@ export const matriculasPublicas = sqliteTable('matriculas_publicas', {
   observacoesAdmin: text('observacoes_admin'),
   processadoEm: integer('processado_em', { mode: 'timestamp' }),
   processadoPor: text('processado_por').references(() => users.id),
-  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 // Agendamentos Experimentais (Site sem login)
@@ -312,7 +312,7 @@ export const agendamentosExperimentais = sqliteTable('agendamentos_experimentais
   observacoesAdmin: text('observacoes_admin'),
   processadoEm: integer('processado_em', { mode: 'timestamp' }),
   processadoPor: text('processado_por').references(() => users.id),
-  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(unixepoch() * 1000)`),
+  criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 export type ReceitaMensal = typeof receitasMensais.$inferSelect
