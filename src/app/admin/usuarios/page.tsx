@@ -15,55 +15,7 @@ interface Usuario {
   name: string
   email: string
   role: 'admin' | 'gestor' | 'professor' | 'responsavel'
-  permissoes: {
-    alunos: boolean
-    turmas: boolean
-    vendas: boolean
-    presencas: boolean
-    financeiro: boolean
-    personal: boolean
-    relatorios: boolean
-  }
-  ativo: boolean
-}
-
-const PERMISSOES_PADRAO = {
-  admin: {
-    alunos: true,
-    turmas: true,
-    vendas: true,
-    presencas: true,
-    financeiro: true,
-    personal: true,
-    relatorios: true
-  },
-  gestor: {
-    alunos: true,
-    turmas: true,
-    vendas: true,
-    presencas: true,
-    financeiro: true,
-    personal: true,
-    relatorios: true
-  },
-  professor: {
-    alunos: true,
-    turmas: true,
-    vendas: false,
-    presencas: true,
-    financeiro: false,
-    personal: true,
-    relatorios: false
-  },
-  responsavel: {
-    alunos: true,
-    turmas: false,
-    vendas: true,
-    presencas: true,
-    financeiro: false,
-    personal: false,
-    relatorios: false
-  }
+  createdAt: Date | string
 }
 
 export default function AdminUsuariosPage() {
@@ -74,8 +26,6 @@ export default function AdminUsuariosPage() {
     name: '',
     email: '',
     role: 'professor' as Usuario['role'],
-    permissoes: PERMISSOES_PADRAO.professor,
-    ativo: true
   })
 
   useEffect(() => {
@@ -100,7 +50,6 @@ export default function AdminUsuariosPage() {
     setFormData({
       ...formData,
       role,
-      permissoes: PERMISSOES_PADRAO[role]
     })
   }
 
@@ -167,8 +116,6 @@ export default function AdminUsuariosPage() {
         name: '',
         email: '',
         role: 'professor',
-        permissoes: PERMISSOES_PADRAO.professor,
-        ativo: true
       })
       setShowForm(false)
       alert('Usuário salvo com sucesso!')
@@ -214,8 +161,6 @@ export default function AdminUsuariosPage() {
       name: '',
       email: '',
       role: 'professor',
-      permissoes: PERMISSOES_PADRAO.professor,
-      ativo: true
     })
     setEditingId(null)
     setShowForm(false)
@@ -265,7 +210,7 @@ export default function AdminUsuariosPage() {
                 {editingId ? 'Editar Usuário' : 'Novo Usuário'}
               </CardTitle>
               <CardDescription>
-                {editingId ? 'Edite as informações e permissões do usuário.' : 'Cadastre um novo usuário do sistema.'}
+                {editingId ? 'Edite as informações do usuário.' : 'Cadastre um novo usuário do sistema.'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -306,40 +251,6 @@ export default function AdminUsuariosPage() {
                       <option value="responsavel">Responsável</option>
                     </select>
                   </div>
-                  <div className="flex items-center space-x-2 pt-8">
-                    <input
-                      type="checkbox"
-                      id="ativo"
-                      checked={formData.ativo}
-                      onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
-                      className="h-4 w-4 text-cepin-blue focus:ring-cepin-blue border-gray-300 rounded"
-                    />
-                    <Label htmlFor="ativo">Usuário Ativo</Label>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-semibold mb-4">Permissões do Sistema</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(formData.permissoes).map(([key, value]) => (
-                      <div key={key} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={key}
-                          checked={value}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            permissoes: {
-                              ...formData.permissoes,
-                              [key]: e.target.checked
-                            }
-                          })}
-                          className="h-4 w-4 text-cepin-blue focus:ring-cepin-blue border-gray-300 rounded"
-                        />
-                        <Label htmlFor={key} className="capitalize">{key}</Label>
-                      </div>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="flex justify-end gap-4 pt-4 border-t">
@@ -359,7 +270,7 @@ export default function AdminUsuariosPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-cepin-dark">Usuários Cadastrados</CardTitle>
-            <CardDescription>Gerencie todos os usuários do sistema e suas permissões.</CardDescription>
+            <CardDescription>Gerencie todos os usuários do sistema.</CardDescription>
           </CardHeader>
           <CardContent>
             {usuarios.length === 0 ? (
@@ -372,11 +283,10 @@ export default function AdminUsuariosPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-cepin-dark">{usuario.name}</h3>
                         {getRoleBadge(usuario.role)}
-                        {!usuario.ativo && <Badge className="bg-gray-100 text-gray-800">Inativo</Badge>}
                       </div>
                       <p className="text-sm text-gray-600">{usuario.email}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Permissões: {Object.entries(usuario.permissoes).filter(([_, v]) => v).map(([k]) => k).join(', ')}
+                        Cadastrado em: {new Date(usuario.createdAt).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
                     <div className="flex gap-2">
