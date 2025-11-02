@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const mes = searchParams.get('mes') || undefined
-    const status = searchParams.get('status') as 'pendente' | 'pago' | 'cancelada' | undefined
+    const status = searchParams.get('status') as 'pendente' | 'pago' | 'cancelado' | undefined
 
     const cobrancas = await getCobrancas({ mes, status })
     
