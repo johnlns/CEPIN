@@ -286,7 +286,10 @@ export default function AdminUsuariosPage() {
                       </div>
                       <p className="text-sm text-gray-600">{usuario.email}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Cadastrado em: {new Date(usuario.createdAt).toLocaleDateString('pt-BR')}
+                        Cadastrado em: {usuario.createdAt 
+                          ? new Date(usuario.createdAt).toLocaleDateString('pt-BR')
+                          : 'Data não disponível'
+                        }
                       </p>
                     </div>
                     <div className="flex gap-2">
