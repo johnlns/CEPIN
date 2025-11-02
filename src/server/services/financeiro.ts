@@ -162,7 +162,17 @@ export async function getBoletimCaixa(filters?: { mes?: string, categoria?: 'rec
 }
 
 export async function getResumoCaixa(dataInicio: string, dataFim: string) {
-  const lancamentos = await getBoletimCaixa(dataInicio, dataFim)
+  // getBoletimCaixa agora usa filtros por mês, não por range de datas
+  // Para resumo de caixa, vamos buscar todos e filtrar manualmente
+  const todosLancamentos = await drizzleDb.query.boletimCaixa.findMany({
+    where: and(
+      gte(boletimCaixa.data, dataInicio),
+      lte(boletimCaixa.data, dataFim)
+    ),
+    orderBy: (boletim, { desc }) => [desc(boletim.data)],
+  })
+  
+  const lancamentos = todosLancamentos
   
   const receitas = lancamentos.filter(l => l.categoria === 'receita')
   const despesas = lancamentos.filter(l => l.categoria === 'despesa')
