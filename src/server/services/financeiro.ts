@@ -56,7 +56,7 @@ export async function createCobranca(data: CreateCobrancaData) {
   return cobranca
 }
 
-export async function getCobrancas(filters?: { mes?: string, status?: 'pendente' | 'pago' | 'cancelada' }) {
+export async function getCobrancas(filters?: { mes?: string, status?: 'pendente' | 'pago' | 'cancelado' }) {
   let whereConditions = []
   
   if (filters?.status) {
