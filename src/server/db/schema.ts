@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer, real, primaryKey } from 'drizzle-orm/sqlite-core'
-import { sql } from 'drizzle-orm'
+import { sql, relations } from 'drizzle-orm'
 
 // Núcleo de Pessoas
 export const users = sqliteTable('users', {
@@ -314,6 +314,56 @@ export const agendamentosExperimentais = sqliteTable('agendamentos_experimentais
   processadoPor: text('processado_por').references(() => users.id),
   criadoEm: integer('criado_em', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
+
+// Relações do Drizzle ORM
+export const turmasRelations = relations(turmas, ({ one, many }) => ({
+  professor: one(users, {
+    fields: [turmas.professorId],
+    references: [users.id],
+  }),
+  horarios: many(turmaHorarios),
+  matriculas: many(matriculas),
+}))
+
+export const turmaHorariosRelations = relations(turmaHorarios, ({ one }) => ({
+  turma: one(turmas, {
+    fields: [turmaHorarios.turmaId],
+    references: [turmas.id],
+  }),
+}))
+
+export const usersRelations = relations(users, ({ many }) => ({
+  turmas: many(turmas),
+  personalAgendas: many(personalAgendas),
+}))
+
+export const alunosRelations = relations(alunos, ({ one, many }) => ({
+  saude: one(alunosSaude, {
+    fields: [alunos.id],
+    references: [alunosSaude.alunoId],
+  }),
+  matriculas: many(matriculas),
+  autorizados: many(autorizadosRetirada),
+  cobrancas: many(cobrancas),
+  atendimentos: many(atendimentos),
+  personalAgendas: many(personalAgendas),
+  pacoteConsumos: many(pacoteConsumos),
+}))
+
+export const matriculasRelations = relations(matriculas, ({ one }) => ({
+  aluno: one(alunos, {
+    fields: [matriculas.alunoId],
+    references: [alunos.id],
+  }),
+  turma: one(turmas, {
+    fields: [matriculas.turmaId],
+    references: [turmas.id],
+  }),
+  plano: one(planos, {
+    fields: [matriculas.planoId],
+    references: [planos.id],
+  }),
+}))
 
 export type ReceitaMensal = typeof receitasMensais.$inferSelect
 export type NewReceitaMensal = typeof receitasMensais.$inferInsert
