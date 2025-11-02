@@ -359,10 +359,6 @@ export const matriculasRelations = relations(matriculas, ({ one }) => ({
     fields: [matriculas.turmaId],
     references: [turmas.id],
   }),
-  plano: one(planos, {
-    fields: [matriculas.planoId],
-    references: [planos.id],
-  }),
 }))
 
 export type ReceitaMensal = typeof receitasMensais.$inferSelect
