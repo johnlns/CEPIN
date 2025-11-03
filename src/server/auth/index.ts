@@ -10,9 +10,12 @@ import crypto from 'crypto'
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000 // 30 dias
 
 export async function requestOTP(email: string) {
+  // Normalizar email para lowercase para evitar problemas com case-sensitive
+  const normalizedEmail = email.toLowerCase().trim()
+  
   // Verificar se usuário existe
   const existingUser = await drizzleDb.query.users.findFirst({
-    where: eq(users.email, email)
+    where: eq(users.email, normalizedEmail)
   })
 
   if (!existingUser) {
@@ -22,7 +25,7 @@ export async function requestOTP(email: string) {
   // Limpar OTPs expirados
   await drizzleDb.delete(emailOtps).where(
     and(
-      eq(emailOtps.email, email),
+      eq(emailOtps.email, normalizedEmail),
       lt(emailOtps.expiresAt, new Date())
     )
   )
@@ -34,24 +37,26 @@ export async function requestOTP(email: string) {
 
   // Salvar OTP
   await drizzleDb.insert(emailOtps).values({
-    email,
+    email: normalizedEmail,
     codeHash,
     expiresAt
   })
 
-  // Enviar email
+  // Enviar email (usar o email original para não confundir o usuário)
   await sendOTPEmail(email, code)
 
   return { success: true }
 }
 
 export async function verifyOTP(email: string, code: string) {
+  // Normalizar email para lowercase
+  const normalizedEmail = email.toLowerCase().trim()
   const codeHash = crypto.createHash('sha256').update(code).digest('hex')
   
   // Buscar OTP válido
   const otp = await drizzleDb.query.emailOtps.findFirst({
     where: and(
-      eq(emailOtps.email, email),
+      eq(emailOtps.email, normalizedEmail),
       eq(emailOtps.codeHash, codeHash),
       gt(emailOtps.expiresAt, new Date())
     )
@@ -73,7 +78,7 @@ export async function verifyOTP(email: string, code: string) {
 
   // Buscar usuário
   const user = await drizzleDb.query.users.findFirst({
-    where: eq(users.email, email)
+    where: eq(users.email, normalizedEmail)
   })
 
   if (!user) {

@@ -13,7 +13,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/server/db/migrate.ts",
     "db:seed": "tsx src/server/db/seed.ts",
-    "add-admin": "tsx scripts/add-admin.ts"
+    "add-admin": "tsx scripts/add-admin.ts",
+    "add-user-prod": "tsx scripts/add-user-prod.ts",
+    "normalize-emails": "tsx scripts/normalize-emails.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

@@ -14,9 +14,12 @@ export type CreateUsuarioData = z.infer<typeof usuarioSchema>
 export async function createUsuario(data: CreateUsuarioData) {
   const validatedData = usuarioSchema.parse(data)
   
+  // Normalizar email para lowercase
+  const normalizedEmail = validatedData.email.toLowerCase().trim()
+  
   // Verificar se o email já existe
   const existente = await drizzleDb.query.users.findFirst({
-    where: eq(users.email, validatedData.email)
+    where: eq(users.email, normalizedEmail)
   })
   
   if (existente) {
@@ -25,6 +28,7 @@ export async function createUsuario(data: CreateUsuarioData) {
 
   const [usuario] = await drizzleDb.insert(users).values({
     ...validatedData,
+    email: normalizedEmail,
   }).returning()
 
   return usuario
@@ -49,10 +53,16 @@ export async function updateUsuario(id: string, data: Partial<CreateUsuarioData>
     throw new Error('Usuário não encontrado')
   }
 
+  // Normalizar email se fornecido
+  const updateData = { ...data }
+  if (data.email) {
+    updateData.email = data.email.toLowerCase().trim()
+  }
+
   // Se está alterando o email, verificar se não está em uso
-  if (data.email && data.email !== usuario.email) {
+  if (updateData.email && updateData.email !== usuario.email) {
     const emailEmUso = await drizzleDb.query.users.findFirst({
-      where: eq(users.email, data.email)
+      where: eq(users.email, updateData.email)
     })
     
     if (emailEmUso) {
@@ -61,7 +71,7 @@ export async function updateUsuario(id: string, data: Partial<CreateUsuarioData>
   }
 
   await drizzleDb.update(users)
-    .set(data)
+    .set(updateData)
     .where(eq(users.id, id))
 
   return await getUsuarioById(id)
